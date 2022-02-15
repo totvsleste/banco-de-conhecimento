@@ -1,0 +1,51 @@
+	SELECT   
+	 CODIGO
+	,DESCRICAO
+	,CUSTO_MEDIO
+	,CUSTO_TOTAL
+	,DT_ULT_COMPRA
+	,DT_ULT_CONSUMO
+	FROM (
+		SELECT   
+		 CODIGO			=	B1_COD
+		,DESCRICAO		=	B1_DESC
+		,CUSTO_MEDIO	=	B2_CM1
+		,CUSTO_TOTAL	=	B2_VATU1
+		,DT_ULT_COMPRA	=	(SELECT MAX(D1_DTDIGIT)
+									FROM SD1990 SD1 
+									INNER JOIN SF4990 SF4
+									ON	SF4.D_E_L_E_T_ = '' 
+									AND F4_FILIAL = '01'
+									AND F4_CODIGO = D1_TES
+									AND	F4_DUPLIC =	'S'
+									AND	F4_ESTOQUE=	'S'
+									WHERE 
+										SD1.D_E_L_E_T_ = ''
+									AND D1_FILIAL 	= '030101' 
+									AND D1_COD 		= B1_COD)
+		,DT_ULT_CONSUMO	=	(SELECT MAX(D3_EMISSAO)
+									FROM SD3990 SD3 
+									WHERE 
+										SD3.D_E_L_E_T_ = ''
+									AND D3_FILIAL 	= '01' 
+									AND D3_COD 		= B1_COD
+									AND SUBSTRING(D3_CF,1,2) = 'RE'
+									AND D3_CF	<>	'RE4'
+									AND D3_CF	<>	'RE6')
+	
+		FROM SB1990 SB1    
+			  
+		INNER JOIN SB2990 SB2   
+		ON	SB2.D_E_L_E_T_= ''   
+		AND B2_FILIAL		=	'01'   
+		AND	B2_COD			=	B1_COD   
+		AND	B2_LOCAL		=	B1_LOCPAD   
+		
+		WHERE   
+			SB1.D_E_L_E_T_ = ''  
+		AND B1_FILIAL		=	''
+		--AND	B1_LGESTO		=	'S'	
+	) AS POSICAO
+	WHERE
+	(DT_ULT_COMPRA <> '' OR DT_ULT_CONSUMO <> '')
+	ORDER BY DESCRICAO, CODIGO

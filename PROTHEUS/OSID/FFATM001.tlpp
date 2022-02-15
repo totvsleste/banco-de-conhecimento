@@ -1,0 +1,146 @@
+#INCLUDE "TOTVS.CH"
+#INCLUDE "TOPCONN.CH"
+#INCLUDE 'TBICONN.CH'
+
+#define ENTER chr( 13 ) + chr( 10 )
+
+User Function FFATM001()
+
+	Local l_Job		:= .T.
+	
+	/*
+	OpenSM0("01",.T.)
+	
+	//Executa para todas as empresas
+	
+	dbSelectArea( "SM0" )
+	SM0->( dbGoTop() )
+	While SM0->( !EOF() )
+		
+		StartJob( "U_FFATM01A", GetEnvServer(), .T., SM0->M0_CODIGO, SM0->M0_CODFIL, l_Job )
+		
+		SM0->( dbSkip() )
+		
+	EndDo
+	*/
+	
+	StartJob( "U_FFATM01A", GetEnvServer(), .T., "01", "010101", l_Job )
+	
+Return()
+
+User Function FFATM01A( c_Empresa, c_Filial, l_Job )
+
+	Local a_CC2Area		:= {}
+	Local a_SA1Area		:= {}
+	Local c_Alias		:= GetNextAlias()
+	Local a_Clientes	:= {}
+	Local c_QryView		:= ""
+	Local n_Opca		:= 0
+	Local c_Motivo		:= ""
+	Local c_Codigo		:= ""
+	Local c_Loja		:= ""
+	Local c_Nome		:= ""
+	Local c_CPF			:= ""
+	Local c_Bairro		:= ""
+	Local c_CEP			:= ""
+	Local c_Estado		:= ""
+	Local c_Endereco	:= ""
+	Local c_Cidade		:= ""
+	Local n_LC			:= ""
+	Local c_Email    	:= ""
+	Local c_Arquivo		:= ""
+	Local c_Matricula	:= ""
+	
+	PRIVATE lMsErroAuto := .F.
+	
+	PREPARE ENVIRONMENT EMPRESA c_Empresa FILIAL c_Filial
+	
+	a_CC2Area	:= CC2->( GetArea() )
+	a_SA1Area	:= SA1->( GetArea() )
+	
+	c_QryView := " SELECT * FROM RM.V_OSID_PROTHEUS_DULCECARD@PROT_BDRMR.IRMADULCE.LOCAL ORDER BY CPF "
+	
+	TCQUERY c_QryView NEW ALIAS ( c_Alias )
+	
+	dbSelectArea( c_Alias )
+	( c_Alias )->( dbGoTop() )
+	
+	While ( c_Alias )->( !EOF() )
+		
+		c_Codigo	:= Substr(( c_Alias )->CPF,1,8)
+		c_Loja		:= Substr(( c_Alias )->CPF,9,4)
+		c_Nome		:= ( c_Alias )->NOME_FUNCIONARIO
+		c_CPF		:= PADR( ( c_Alias )->CPF, TAMSX3("A1_CGC")[1] )
+		c_Bairro	:= ( c_Alias )->BAIRRO
+		c_CEP		:= ( c_Alias )->CEP
+		c_Estado	:= PADR( ( c_Alias )->ESTADO, TAMSX3("CC2_EST")[1] )
+		c_Endereco	:= Alltrim( ( c_Alias )->DS_RUA ) + " " + Alltrim( ( c_Alias )->RUA )
+		c_Cidade	:= PADR( UPPER( ( c_Alias )->CIDADE ), TAMSX3("CC2_MUN")[1] )
+		n_LC		:= ( c_Alias )->VALOR
+		c_Email		:= ( c_Alias )->EMAIL
+		d_DtCad		:= ( c_Alias )->DATA_ADMISSAO
+		c_Coligada	:= Alltrim( Str( ( c_Alias )->CODCOLIGADA ) )
+		c_FilialRM	:= Alltrim( Str( ( c_Alias )->CODFILIAL ) )
+		c_Matricula	:= Alltrim( Str( ( c_Alias )->MATRICULA ) )
+		
+		a_Clientes	:= {{"A1_COD"		,c_Codigo  	,NIL},;
+						{"A1_LOJA"		,c_Loja 	,NIL},;
+						{"A1_NOME"    	,c_Nome		,Nil},;
+						{"A1_NREDUZ"   	,c_Nome 	,Nil},;
+						{"A1_CGC" 	 	,c_CPF  	,Nil},;
+						{"A1_PESSOA" 	,"F"    	,Nil},;
+						{"A1_TIPO" 	 	,"F"    	,Nil},;
+						{"A1_END" 	 	,c_Endereco	,Nil},;
+						{"A1_BAIRRO" 	,c_Bairro	,Nil},;
+						{"A1_CEP" 	 	,c_CEP		,Nil},;
+						{"A1_EST" 	 	,c_Estado 	,Nil},;
+						{"A1_MUN" 	 	,c_Cidade	,Nil},;
+						{"A1_LC" 	 	,n_LC  		,Nil},;
+						{"A1_DTCAD"	 	,d_DtCad	,Nil},;
+						{"A1_FSCOLIG" 	,c_Coligada	,Nil},;
+						{"A1_FSFIL"	 	,c_FilialRM	,Nil},;
+						{"A1_EMAIL"  	,c_Email	,Nil}}
+		
+		dbSelectArea("SA1")
+		dbSetOrder(3)
+		If dbSeek( xFilial("SA1") + c_CPF, .T. )
+			
+			n_Opca := 4
+			
+		Else
+			n_Opca	:= 3
+			
+		EndIf
+		
+		MSExecAuto( {|x,y| Mata030(x,y)}, a_Clientes, n_Opca )
+		
+		If lMsErroAuto
+			
+			c_Arquivo	:= "importacao_funcionario_x_cliente_matricula_" + c_Matricula + ".txt"
+			c_Motivo	:= MostraErro("\TOTVSBA_LOG\",c_Arquivo )
+			
+			Conout( "FFATM001 - Erro no ExecAuto de Cliente. Favor verificar o arquivo: " + c_Arquivo )
+			
+		Else
+			
+			dbSelectArea("CC2")
+			dbSetOrder(4)
+			If dbSeek( xFilial("CC2") + c_Estado + c_Cidade, .T. )
+				
+				dbSelectArea("SA1")
+				RecLock("SA1",.F.)
+				SA1->A1_COD_MUN	:= CC2->CC2_CODMUN
+				MsUnLock()
+				
+			EndIf
+		EndIf
+		
+		( c_Alias )->( dbSkip() )
+		
+	EndDo
+	( c_Alias )->( dbCloseArea() )
+	
+	RestArea( a_CC2Area )
+	RestArea( a_SA1Area )
+
+Return()

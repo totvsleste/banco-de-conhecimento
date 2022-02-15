@@ -1,0 +1,17 @@
+/*/{Protheus.doc} u_HelloWordTLPP
+    (long_description)
+    @type  Function
+    @author francisco.ssa
+    @since 13/01/2020
+    @version 12.1.25
+    @param nil, nil, nao esperado
+    @return (), nil, nao esperado
+    @example
+    (examples)
+    @see (links_or_references)
+    /*/
+Function u_HelloWordTLPP()
+
+    Alert("Helo word!!!")
+
+Return()

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>BANCO CONHECIMENTO</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>org.eclipse.dltk.core.scriptbuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>br.com.totvs.tds.TotvsNature</nature>
+	</natures>
+	<linkedResources>
+		<link>
+			<name>fonte padrao/matxfunb.prx</name>
+			<type>1</type>
+			<location>C:/Totvs/Source Code/V12.1.17/Infra-Estrutura/matxfunb.prx</location>
+		</link>
+		<link>
+			<name>Restaurante/imagens/mesa_100_1.bmp</name>
+			<type>1</type>
+			<location>C:/Totvs/restaurante/imagens/mesa_100_1.bmp</location>
+		</link>
+		<link>
+			<name>Restaurante/imagens/mesa_100_2.bmp</name>
+			<type>1</type>
+			<location>C:/Totvs/restaurante/imagens/mesa_100_2.bmp</location>
+		</link>
+		<link>
+			<name>Restaurante/imagens/mesa_100_3.bmp</name>
+			<type>1</type>
+			<location>C:/Totvs/restaurante/imagens/mesa_100_3.bmp</location>
+		</link>
+	</linkedResources>
+</projectDescription>

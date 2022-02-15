@@ -1,0 +1,15 @@
+
+#INCLUDE "TOPCONN.CH"
+#INCLUDE 'TOTVS.CH'
+
+namespace exemplo
+
+Class clsTLPP
+
+EndClass
+
+User Function UF_TLPP()
+
+	oClass := exemplo.clsTLPP():New()
+
+Return

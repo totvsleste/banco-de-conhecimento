@@ -1,0 +1,104 @@
+#INCLUDE "TOTVS.CH"
+#INCLUDE "TOPCONN.CH"
+#INCLUDE 'TBICONN.CH'
+
+ /*/{Protheus.doc} FINTM001(description)
+    @type  Function
+    @
+    @since 27/12/2019
+    @version version
+    @param param_name, param_type, param_descr
+    @return return_var, return_type, return_description
+    @example
+    (examples)
+    @see (links_or_references)
+    /*/
+User Function FINTM001()
+
+    Local l_Job     := .T.
+
+    StartJob( "U_FINTM01A", GetEnvServer(), .T., "99", "01", l_Job )
+
+Return()
+    
+User Function FINTM01A( c_Empresa, c_Filial, l_Job )
+    
+    Local c_Banco       := ""
+    Local c_Servidor    := ""
+    Local n_Port        := ""
+    Local n_Handle      := 0
+    Local c_Query       := ""
+    Local c_Alias       := GetNextAlias()
+    Local a_Field       := {}
+    Local o_Table
+
+    PREPARE ENVIRONMENT EMPRESA c_Empresa FILIAL c_Filial
+
+    If o_Table <> NIL
+        o_Table:Delete()
+        o_Table := Nil
+    EndIf
+
+    o_Table := FwTemporaryTable():New("TRB")
+
+    aadd(a_Field,{"ID"		,"C"	,5      ,0})
+	aadd(a_Field,{"NOME"	,"C"	,50	    ,0})
+	aadd(a_Field,{"CPF"	    ,"C"	,14     ,0})
+
+    o_Table:SetFields( a_Field )
+	o_Table:AddIndex("indice1", {"ID"} )
+	o_Table:Create()
+
+    BEGINSQL ALIAS c_Alias
+        SELECT 
+            A1_COD,
+            A1_NOME,
+            A1_CGC
+        FROM
+            %TABLE:SA1% SA1
+        WHERE
+            SA1.%NOTDEL%
+    ENDSQL
+    dbSelectArea( c_Alias )
+    ( c_Alias )->( DBGOTOP() )
+    While ( c_Alias )->( !EOF() )
+        
+        dbSelectArea("TRB")
+        RecLock("TRB",.T.)
+        TRB->ID     := RIGHT( ( c_Alias )->A1_COD, 5 )
+        TRB->NOME   := ( c_Alias )->A1_NOME
+        TRB->CPF    := ( c_Alias )->A1_CGC
+        MsUnLock()
+
+        ( c_Alias )->( dbSkip() )
+
+    EndDo
+    ( c_Alias )->( DBCLOSEAREA() )
+
+    c_Banco     := SuperGetMV( "FS_BANCEXT",.F.,"MSSQL/REPOSITORIO" )
+    c_Servidor  := SuperGetMV( "FS_SERVEXT",.F.,"localhost" )
+    n_Port      := SuperGetMV( "FS_PORTEXT",.F.,7890 )
+    n_Handle    := TCLINK( c_Banco, c_Servidor, n_Port )
+
+    conout( "Conectado com: " + TcGetDB() )
+    conout( "Identificador da conexao no SGDB: " + TCGetDBSID() )
+    
+    If n_Handle >= 0
+        
+        While TRB->( !EOF() )
+
+            c_Query := "INSERT INTO CLIENTES VALUES ('" + TRB->ID + "','" + TRB->NOME + "','" + TRB->CPF + "')"
+            
+            If TCSQLEXEC( c_Query ) < 0
+                CONOUT( "Error: " + TCSQLERROR() )
+            EndIf
+            
+            TRB->( dbSkip() )
+
+        EndDo
+
+    EndIf
+
+    TCUNLINK( n_Handle, .T. )
+
+Return

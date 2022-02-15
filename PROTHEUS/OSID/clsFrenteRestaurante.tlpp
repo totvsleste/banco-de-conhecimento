@@ -1,0 +1,30 @@
+#INCLUDE "TOPCONN.CH"
+#INCLUDE 'TOTVS.CH'
+#INCLUDE 'FONT.CH'
+#INCLUDE 'COLORS.CH'
+#INCLUDE "rwmake.ch"
+
+Class clsFrenteRestaurante
+
+	Method New() Constructor
+	Method mtdZeraVariaveis()
+
+EndClass
+
+Method New() Class clsFrenteRestaurante
+
+Return()
+
+Method mtdZeraVariaveis() Class clsFrenteRestaurante
+
+	c_Vendedor	:= ""
+	c_CodVend	:= ""
+	c_Mesa		:= ""
+
+	c_Comanda	:= ""
+	l_Comanda	:= .F.
+
+	oTMsgItem2:SetText( "" )
+	oTMsgItem3:SetText( "" )
+
+Return()

@@ -1,0 +1,5 @@
+#INCLUDE "CTBXMIX.ch"
+#Include "PROTHEUS.CH"
+//FONTE SERA DESCONTINUADO FAVOR MANTER VAZIO
+Function __CtbxMix()
+Return(.T.)

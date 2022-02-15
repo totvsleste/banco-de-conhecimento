@@ -1,0 +1,94 @@
+#INCLUDE "TOTVS.CH"
+#INCLUDE "TOPCONN.CH"
+#INCLUDE 'TBICONN.CH'
+
+#define ENTER chr( 13 ) + chr( 10 )
+
+User Function FFATM003()
+
+	Local o_Tela	:= clsTelasGen():New()
+	Local c_Janela	:= "Carga dos Indicadores de Produto"
+	Local c_Tit1	:= "Esta rotina tem a finalidade dar carga nos indicadores de produ"
+	Local c_Tit2	:= "tos conforme parametrizacao."
+	Local c_Tit3	:= ""
+	Local c_Perg	:= "FFATM003"
+
+	If o_Tela:mtdParOkCan( c_Janela, c_Tit1, c_Tit2, c_Tit3, c_Perg )
+		MsAguarde( {|| f_CargaIndicadores() }, "Aguarde!!!", "Carga dos indicadores...")
+	EndIf
+
+Return()
+
+Static Function f_CargaIndicadores()
+
+	Local c_Alias	:= GetNextAlias()
+	Local nX		:= 0
+
+	BeginSQL Alias c_Alias
+
+		SELECT
+			B1_COD,
+			B1_GRUPO,
+			BM_GRUPO,
+			BM_FSTS01,
+			BM_FSTS02,
+			BM_FSTS03
+		FROM
+			%TABLE:SB1% SB1
+		INNER JOIN
+			%TABLE:SBM% SBM
+		ON
+			SB1.B1_FILIAL = SBM.BM_FILIAL
+			AND SB1.B1_COD = SBM.BM_COD
+			AND SBM.%NOTDEL%
+		WHERE
+			SB1.%NOTDEL%
+	EndSQL
+
+	dbSelectArea( c_Alias )
+	( c_Alias )->( dbGoTop() )
+
+	While ( c_Alias )->(!EOF() )
+
+		IF !EMPTY( ( c_Alias )->BM_FSTS01 )
+
+			dbSelecArea("SBZ")
+			RecLock("SBZ",.T.)
+			SBZ->BZ_FILIAL	:= "010101"
+			SBZ->BZ_COD		:= ( c_Alias )->B1_COD
+			SBZ->BZ_LOCPAD	:= ( c_Alias )->B1_LOCPAD
+			SBZ->BZ_TS		:= ( c_Alias )->BM_FSTS01
+			MsUnlock()
+
+		ENDIF
+
+		IF !EMPTY( ( c_Alias )->BM_FSTS02 )
+
+			dbSelecArea("SBZ")
+			RecLock("SBZ",.T.)
+			SBZ->BZ_FILIAL	:= "010102"
+			SBZ->BZ_COD		:= ( c_Alias )->B1_COD
+			SBZ->BZ_LOCPAD	:= ( c_Alias )->B1_LOCPAD
+			SBZ->BZ_TS 		:= ( c_Alias )->BM_FSTS02
+			MsUnlock()
+
+		ENDIF
+
+		IF !EMPTY( ( c_Alias )->BM_FSTS03 )
+
+			dbSelecArea("SBZ")
+			RecLock("SBZ",.T.)
+			SBZ->BZ_FILIAL	:= "010103"
+			SBZ->BZ_COD		:= ( c_Alias )->B1_COD
+			SBZ->BZ_LOCPAD	:= ( c_Alias )->B1_LOCPAD
+			SBZ->BZ_TS 		:= ( c_Alias )->BM_FSTS03
+
+		ENDIF
+
+		( c_Alias )->( dbSkip() )
+
+	EndDo
+
+	( c_Alias )->( dbCloseArea)
+
+Return()

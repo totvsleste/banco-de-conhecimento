@@ -1,0 +1,8 @@
+Class MeuTest
+
+	Method run()
+
+EndClass
+
+Method run Class MeuTest
+Return

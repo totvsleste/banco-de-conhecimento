@@ -1,0 +1,126 @@
+#INCLUDE "TOTVS.CH"
+#INCLUDE "TOPCONN.CH"
+#INCLUDE 'TBICONN.CH'
+
+#define ENTER chr( 13 ) + chr( 10 )
+
+User Function FFATM002()
+
+	Local o_Tela	:= clsTelasGen():New()
+	Local c_Janela	:= "Exportacao de Clientes"
+	Local c_Tit1	:= "Esta rotina tem a finalidade de exportar o cadastro de clientes"
+	Local c_Tit2	:= "conforme parametrização. A exportação será feita em arquivo CSV."
+	Local c_Tit3	:= ""
+	Local c_Perg	:= "FFATM002"
+
+	If o_Tela:mtdParOkCan( c_Janela, c_Tit1, c_Tit2, c_Tit3, c_Perg )
+		MsAguarde( {|| f_ExportaClientes() }, "Aguarde!!!", "Exportando os clientes...")
+	EndIf
+
+Return()
+
+Static Function f_ExportaClientes()
+
+	Local c_Alias		:= GetNextAlias()
+	Local o_Explorer	:= clsExplorer():New()
+
+	Local c_Caminho		:= SuperGetMV( "FS_DC_CAC",.F.,"c:\totvs\temp\" )
+	Local c_Arquivo		:= "export_cliente_protheus_" + DTOS( dDataBase ) + "_" + SUBSTR(TIME(), 1, 2)  + SUBSTR(TIME(), 4, 2) + SUBSTR(TIME(), 7, 2) + ".csv"
+	Local n_Handle 		:= 0
+	Local c_Linha		:= ""
+
+	If !o_Explorer:mtdExistePasta( c_Caminho )
+		If !o_Explorer:mtdCriaPasta( c_Caminho )
+			Alert( "Problemas ao criar o caminho "+ c_Caminho + ". Contate o administrador." )
+			Return()
+		EndIf
+	EndIf
+
+	n_Handle := FCREATE(c_Caminho + c_Arquivo)
+
+	If n_Handle = -1
+		Alert( "Erro ao criar arquivo - FERROR " + Str( FError(), 4 ) )
+		Return()
+	EndIf
+
+	BeginSQL Alias c_Alias
+
+		SELECT
+			A1_COD,
+			A1_LOJA,
+			A1_NOME,
+			A1_PESSOA,
+			A1_END,
+			A1_NREDUZ,
+			A1_BAIRRO,
+			A1_TIPO,
+			A1_EST,
+			A1_CEP,
+			A1_COD_MUN,
+			A1_MUN,
+			A1_ENDCOB,
+			A1_DDD,
+			A1_TEL,
+			A1_CONTATO,
+			A1_CGC,
+			A1_INSCR,
+			A1_PAIS,
+			A1_INSCRM,
+			A1_RISCO,
+			A1_LC,
+			A1_VENCLC
+		FROM
+			%TABLE:SA1% SA1
+		WHERE
+			SA1.%NOTDEL%
+
+	EndSQL
+
+	dbSelectArea( c_Alias )
+	( c_Alias )->( dbGoTop() )
+	While ( c_Alias )->( !EOF() )
+
+		c_Linha := Alltrim( ( c_Alias )->A1_COD )		+ ";"
+		c_Linha += Alltrim( ( c_Alias )->A1_LOJA ) 		+ ";"
+		c_Linha += Alltrim( ( c_Alias )->A1_NOME )		+ ";"
+		c_Linha += Alltrim( ( c_Alias )->A1_PESSOA )	+ ";"
+		c_Linha += Alltrim( ( c_Alias )->A1_END )		+ ";"
+		c_Linha += Alltrim( ( c_Alias )->A1_NREDUZ )	+ ";"
+		c_Linha += Alltrim( ( c_Alias )->A1_BAIRRO )	+ ";"
+		c_Linha += Alltrim( ( c_Alias )->A1_TIPO )		+ ";"
+		c_Linha += Alltrim( ( c_Alias )->A1_EST )		+ ";"
+		c_Linha += Alltrim( ( c_Alias )->A1_CEP )		+ ";"
+		c_Linha += Alltrim( ( c_Alias )->A1_COD_MUN )	+ ";"
+		c_Linha += Alltrim( ( c_Alias )->A1_MUN )		+ ";"
+		c_Linha += Alltrim( ( c_Alias )->A1_ENDCOB )	+ ";"
+		c_Linha += Alltrim( ( c_Alias )->A1_DDD )		+ ";"
+		c_Linha += Alltrim( ( c_Alias )->A1_TEL )		+ ";"
+		c_Linha += Alltrim( ( c_Alias )->A1_CONTATO )	+ ";"
+		c_Linha += Alltrim( ( c_Alias )->A1_CGC )		+ ";"
+		c_Linha += Alltrim( ( c_Alias )->A1_INSCR )		+ ";"
+		c_Linha += Alltrim( ( c_Alias )->A1_PAIS )		+ ";"
+		c_Linha += Alltrim( ( c_Alias )->A1_INSCRM )	+ ";"
+		c_Linha += Alltrim( ( c_Alias )->A1_RISCO )		+ ";"
+
+		If STOD(( c_Alias )->A1_VENCLC ) >= dDataBase
+
+			c_Linha += Alltrim( ( c_Alias )->A1_LC )		+ ";"
+			c_Linha += Alltrim( ( c_Alias )->A1_VENCLC ) 	+ ENTER
+
+		Else
+
+			c_Linha += "" + ";"
+			c_Linha += "" + ENTER
+
+		EndIf
+
+		FWrite( n_Handle, c_Linha ) // Insere texto no arquivo
+
+		( c_Alias )->( dbSkip() )
+
+	EndDo
+	( c_Alias )->( dbCloseArea() )
+
+	fClose( n_Handle )
+
+Return()
