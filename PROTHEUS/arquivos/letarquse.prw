@@ -23,6 +23,7 @@ function u_LetArqUse()
         FT_FSKIP()
     End
     // Fecha o Arquivo
+    
     FT_FUSE()
 
 return
